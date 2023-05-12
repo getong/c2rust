@@ -519,7 +519,7 @@ impl<'a, 'tcx> ExprRewriteVisitor<'a, 'tcx> {
         }
 
         if from != to {
-            eprintln!(
+            panic!(
                 "unsupported cast kind: {:?} -> {:?} (original input: {:?})",
                 from, to, orig_from
             );
