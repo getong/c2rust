@@ -137,6 +137,19 @@ impl<'a, 'tcx> UnlowerVisitor<'a, 'tcx> {
         }
     }
 
+    fn should_ignore_statement(&self, loc: Location) -> bool {
+        if let Some(stmt) = self.mir.stmt_at(loc).left() {
+            match stmt.kind {
+                mir::StatementKind::FakeRead(..)
+                | mir::StatementKind::StorageLive(..)
+                | mir::StatementKind::StorageDead(..)
+                | mir::StatementKind::Nop => return true,
+                _ => {}
+            }
+        }
+        false
+    }
+
     fn is_return_place_or_temp(&self, pl: mir::Place<'tcx>) -> bool {
         if pl.projection.len() > 0 {
             return false;
@@ -154,7 +167,9 @@ impl<'a, 'tcx> UnlowerVisitor<'a, 'tcx> {
     fn visit_expr_inner(&mut self, ex: &'tcx hir::Expr<'tcx>) {
         let mut locs = Vec::with_capacity(1);
         for &loc in self.span_index.lookup_exact(ex.span) {
-            locs.push(loc);
+            if !self.should_ignore_statement(loc) {
+                locs.push(loc);
+            }
         }
         if locs.len() == 0 {
             return;
